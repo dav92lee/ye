@@ -215,7 +215,7 @@ class PetView: NSView {
         let image = NSImage(size: size)
         image.lockFocus()
         let rect = NSRect(origin: .zero, size: size)
-        NSColor.systemPink.setFill()
+        NSColor.clear.setFill()
         rect.fill()
 
         let label = "\(directionLabel(direction)) \(index)"

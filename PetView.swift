@@ -11,14 +11,30 @@ class PetView: NSView {
 
     private let imageView = NSImageView()
     private let shadowImageView = NSImageView()
-    private var animationFrames: [Direction: [NSImage]] = [:]
+    private enum AnimationState {
+        case walking
+        case sitTransition
+        case sitting
+    }
+
+    private var walkFrames: [Direction: [NSImage]] = [:]
+    private var sitTransitionFrames: [Direction: [NSImage]] = [:]
+    private var sitIdleFrames: [Direction: [NSImage]] = [:]
     private var frameIndex = -1
     private var lastFrameSwitch: TimeInterval = 0
-    private let frameInterval: TimeInterval = 0.03
+    private let walkFrameInterval: TimeInterval = 0.03
+    private let sitTransitionInterval: TimeInterval = 0.06
+    private let sitIdleInterval: TimeInterval = 0.12
 
     private var lastUpdateTime: TimeInterval = 0
     private var movementTimer: Timer?
     private var velocity = CGVector(dx: 140, dy: 140)
+    private var isMoving = true
+    private var nextStateChangeTime: TimeInterval = 0
+    private var animationState: AnimationState = .walking
+    private var lastDirection: Direction = .downLeft
+    private let moveDurationRange: ClosedRange<TimeInterval> = 2.0...4.5
+    private let restDurationRange: ClosedRange<TimeInterval> = 2.5...5.5
 
     private let walkFrameNames: [Direction: [String]] = [
         // Replace these placeholders with the names of your sprite frames in Assets.xcassets.
@@ -116,6 +132,28 @@ class PetView: NSView {
             "walk_down_left_22"
         ]
     ]
+    private let sitTransitionFrameNames: [Direction: [String]] = [
+        // Replace these placeholders with the names of your sit transition frames.
+        // Sitting only uses the down direction, so only include down-facing frames.
+        .downLeft: [
+            "sit_transition_down_left_01",
+            "sit_transition_down_left_02",
+            "sit_transition_down_left_03",
+            "sit_transition_down_left_04",
+            "sit_transition_down_left_05",
+            "sit_transition_down_left_06"
+        ]
+    ]
+    private let sitIdleFrameNames: [Direction: [String]] = [
+        // Replace these placeholders with the names of your seated idle frames.
+        // Sitting only uses the down direction, so only include down-facing frames.
+        .downLeft: [
+            "sit_idle_down_left_01",
+            "sit_idle_down_left_02",
+            "sit_idle_down_left_03",
+            "sit_idle_down_left_04"
+        ]
+    ]
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
@@ -183,15 +221,16 @@ class PetView: NSView {
 
     private func loadAnimations() {
         Direction.allCases.forEach { direction in
-            let frames = loadFrames(for: direction)
-            animationFrames[direction] = frames
+            walkFrames[direction] = loadFrames(for: direction, namesByDirection: walkFrameNames)
+            sitTransitionFrames[direction] = loadFrames(for: direction, namesByDirection: sitTransitionFrameNames)
+            sitIdleFrames[direction] = loadFrames(for: direction, namesByDirection: sitIdleFrameNames)
         }
-        updateAnimationFrame(for: currentDirection())
+        updateAnimationFrame(for: lastDirection)
     }
 
-    private func loadFrames(for direction: Direction) -> [NSImage] {
+    private func loadFrames(for direction: Direction, namesByDirection: [Direction: [String]]) -> [NSImage] {
         if let mirroredSource = mirroredDirection(for: direction),
-           let names = walkFrameNames[mirroredSource] {
+           let names = namesByDirection[mirroredSource] {
             return names.enumerated().map { index, name in
                 if let image = NSImage(named: name) {
                     return flippedImageHorizontally(image)
@@ -200,7 +239,7 @@ class PetView: NSView {
             }
         }
 
-        let names = walkFrameNames[direction] ?? []
+        let names = namesByDirection[direction] ?? []
         return names.enumerated().map { index, name in
             if let image = NSImage(named: name) {
                 return image
@@ -213,6 +252,7 @@ class PetView: NSView {
         guard movementTimer == nil else { return }
         lastUpdateTime = CACurrentMediaTime()
         lastFrameSwitch = lastUpdateTime
+        nextStateChangeTime = lastUpdateTime + Double.random(in: moveDurationRange)
         movementTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 60.0, repeats: true) { [weak self] _ in
             self?.tick()
         }
@@ -222,8 +262,27 @@ class PetView: NSView {
         let now = CACurrentMediaTime()
         let delta = now - lastUpdateTime
         lastUpdateTime = now
-        updatePosition(deltaTime: delta)
+        updateMovementState(currentTime: now)
+        if isMoving {
+            updatePosition(deltaTime: delta)
+        }
         updateAnimationIfNeeded(currentTime: now)
+    }
+
+    private func updateMovementState(currentTime: TimeInterval) {
+        guard currentTime >= nextStateChangeTime else { return }
+        if isMoving {
+            isMoving = false
+            animationState = .sitTransition
+            frameIndex = -1
+            nextStateChangeTime = currentTime + Double.random(in: restDurationRange)
+        } else {
+            isMoving = true
+            animationState = .walking
+            frameIndex = -1
+            pickNewVelocity()
+            nextStateChangeTime = currentTime + Double.random(in: moveDurationRange)
+        }
     }
 
     private func updatePosition(deltaTime: TimeInterval) {
@@ -254,17 +313,29 @@ class PetView: NSView {
         }
 
         frame = newFrame
+        lastDirection = currentDirection()
     }
 
     private func updateAnimationIfNeeded(currentTime: TimeInterval) {
-        guard currentTime - lastFrameSwitch >= frameInterval else { return }
+        let interval = animationInterval(for: animationState)
+        guard currentTime - lastFrameSwitch >= interval else { return }
         lastFrameSwitch = currentTime
-        updateAnimationFrame(for: currentDirection())
+        updateAnimationFrame(for: animationDirection())
     }
 
     private func updateAnimationFrame(for direction: Direction) {
-        guard let frames = animationFrames[direction], !frames.isEmpty else { return }
-        frameIndex = (frameIndex + 1) % frames.count
+        let frames = animationFrames(for: direction, state: animationState)
+        guard !frames.isEmpty else { return }
+        frameIndex += 1
+        if frameIndex >= frames.count {
+            if animationState == .sitTransition {
+                animationState = .sitting
+                frameIndex = 0
+                imageView.image = sitIdleFrames[direction]?.first
+                return
+            }
+            frameIndex = 0
+        }
         imageView.image = frames[frameIndex]
     }
 
@@ -279,6 +350,45 @@ class PetView: NSView {
             return .downRight
         }
         return .downLeft
+    }
+
+    private func animationInterval(for state: AnimationState) -> TimeInterval {
+        switch state {
+        case .walking:
+            return walkFrameInterval
+        case .sitTransition:
+            return sitTransitionInterval
+        case .sitting:
+            return sitIdleInterval
+        }
+    }
+
+    private func animationDirection() -> Direction {
+        switch animationState {
+        case .walking:
+            return lastDirection
+        case .sitTransition, .sitting:
+            return .downLeft
+        }
+    }
+
+    private func animationFrames(for direction: Direction, state: AnimationState) -> [NSImage] {
+        switch state {
+        case .walking:
+            return walkFrames[direction] ?? []
+        case .sitTransition:
+            return sitTransitionFrames[direction] ?? []
+        case .sitting:
+            return sitIdleFrames[direction] ?? []
+        }
+    }
+
+    private func pickNewVelocity() {
+        let speedRange: ClosedRange<CGFloat> = 120...180
+        let speed = CGFloat.random(in: speedRange)
+        let angle = CGFloat.random(in: 0...(2 * .pi))
+        velocity = CGVector(dx: cos(angle) * speed, dy: sin(angle) * speed)
+        lastDirection = currentDirection()
     }
 
     private func placeholderImage(direction: Direction, index: Int) -> NSImage {

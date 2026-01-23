@@ -10,6 +10,7 @@ class PetView: NSView {
     }
 
     private let imageView = NSImageView()
+    private let shadowImageView = NSImageView()
     private var animationFrames: [Direction: [NSImage]] = [:]
     private var frameIndex = -1
     private var lastFrameSwitch: TimeInterval = 0
@@ -134,6 +135,7 @@ class PetView: NSView {
 
     override func layout() {
         super.layout()
+        layoutShadow()
         imageView.frame = bounds
     }
 
@@ -151,9 +153,32 @@ class PetView: NSView {
     }
 
     private func setupImageView() {
+        shadowImageView.image = NSImage(named: "shadow")
+        shadowImageView.imageScaling = .scaleProportionallyUpOrDown
+        shadowImageView.frame = bounds
+        addSubview(shadowImageView)
+
         imageView.imageScaling = .scaleProportionallyUpOrDown
         imageView.frame = bounds
         addSubview(imageView)
+    }
+
+    private func layoutShadow() {
+        guard let image = shadowImageView.image else {
+            shadowImageView.frame = bounds
+            return
+        }
+        let targetWidth = bounds.width * 0.9
+        let scale = targetWidth / max(image.size.width, 1)
+        let targetHeight = image.size.height * scale
+        let originX = (bounds.width - targetWidth) / 2.0
+        let originY = bounds.minY + 2.0
+        shadowImageView.frame = NSRect(
+            x: originX,
+            y: originY,
+            width: targetWidth,
+            height: targetHeight
+        )
     }
 
     private func loadAnimations() {

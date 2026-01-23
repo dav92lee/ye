@@ -388,8 +388,15 @@ class PetView: NSView {
     private func pickNewVelocity() {
         let speedRange: ClosedRange<CGFloat> = 120...180
         let speed = CGFloat.random(in: speedRange)
-        let angle = CGFloat.random(in: 0...(2 * .pi))
-        velocity = CGVector(dx: cos(angle) * speed, dy: sin(angle) * speed)
+        let component = speed / sqrt(2)
+        let directions: [(CGFloat, CGFloat)] = [
+            (component, component),
+            (component, -component),
+            (-component, component),
+            (-component, -component)
+        ]
+        let selected = directions.randomElement() ?? (component, component)
+        velocity = CGVector(dx: selected.0, dy: selected.1)
         lastDirection = currentDirection()
     }
 

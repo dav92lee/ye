@@ -13,7 +13,7 @@ class PetView: NSView {
     private var animationFrames: [Direction: [NSImage]] = [:]
     private var frameIndex = -1
     private var lastFrameSwitch: TimeInterval = 0
-    private let frameInterval: TimeInterval = 0.12
+    private let frameInterval: TimeInterval = 0.04
 
     private var lastUpdateTime: TimeInterval = 0
     private var movementTimer: Timer?

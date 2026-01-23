@@ -32,8 +32,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let petSize: CGFloat = 80
         let pet = PetView(frame: NSRect(x: 200, y: 200, width: petSize, height: petSize))
         pet.wantsLayer = true
-        pet.layer?.backgroundColor = NSColor.systemPink.cgColor
-        pet.layer?.cornerRadius = 12
 
         root.addSubview(pet)
 

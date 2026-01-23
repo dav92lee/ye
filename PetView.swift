@@ -18,7 +18,7 @@ class PetView: NSView {
 
     private var lastUpdateTime: TimeInterval = 0
     private var movementTimer: Timer?
-    private var velocity = CGVector(dx: 140, dy: 140)
+    private var velocity = CGVector(dx: 100, dy: 100)
 
     private let walkFrameNames: [Direction: [String]] = [
         // Replace these placeholders with the names of your sprite frames in Assets.xcassets.

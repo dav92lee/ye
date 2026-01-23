@@ -36,5 +36,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         root.addSubview(pet)
 
         window.makeKeyAndOrderFront(nil)
+        
+        for existingWindow in NSApp.windows where existingWindow !== window {
+            existingWindow.orderOut(nil)
+        }
     }
 }

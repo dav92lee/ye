@@ -28,12 +28,6 @@ class PetView: NSView {
             "walk_up_left_03",
             "walk_up_left_04"
         ],
-        .upRight: [
-            "walk_up_right_01",
-            "walk_up_right_02",
-            "walk_up_right_03",
-            "walk_up_right_04"
-        ],
         .downLeft: [
             "walk_down_left_01",
             "walk_down_left_02",
@@ -57,30 +51,6 @@ class PetView: NSView {
             "walk_down_left_20",
             "walk_down_left_21",
             "walk_down_left_22"
-        ],
-        .downRight: [
-            "walk_down_right_01",
-            "walk_down_right_02",
-            "walk_down_right_03",
-            "walk_down_right_04",
-            "walk_down_right_05",
-            "walk_down_right_06",
-            "walk_down_right_07",
-            "walk_down_right_08",
-            "walk_down_right_09",
-            "walk_down_right_10",
-            "walk_down_right_11",
-            "walk_down_right_12",
-            "walk_down_right_13",
-            "walk_down_right_14",
-            "walk_down_right_15",
-            "walk_down_right_16",
-            "walk_down_right_17",
-            "walk_down_right_18",
-            "walk_down_right_19",
-            "walk_down_right_20",
-            "walk_down_right_21",
-            "walk_down_right_22"
         ]
     ]
 
@@ -126,16 +96,30 @@ class PetView: NSView {
 
     private func loadAnimations() {
         Direction.allCases.forEach { direction in
-            let names = walkFrameNames[direction] ?? []
-            let frames = names.enumerated().map { index, name in
-                if let image = NSImage(named: name) {
-                    return image
-                }
-                return placeholderImage(direction: direction, index: index + 1)
-            }
+            let frames = loadFrames(for: direction)
             animationFrames[direction] = frames
         }
         updateAnimationFrame(for: currentDirection())
+    }
+
+    private func loadFrames(for direction: Direction) -> [NSImage] {
+        if let mirroredSource = mirroredDirection(for: direction),
+           let names = walkFrameNames[mirroredSource] {
+            return names.enumerated().map { index, name in
+                if let image = NSImage(named: name) {
+                    return flippedImageHorizontally(image)
+                }
+                return placeholderImage(direction: direction, index: index + 1)
+            }
+        }
+
+        let names = walkFrameNames[direction] ?? []
+        return names.enumerated().map { index, name in
+            if let image = NSImage(named: name) {
+                return image
+            }
+            return placeholderImage(direction: direction, index: index + 1)
+        }
     }
 
     private func startMovementIfNeeded() {
@@ -244,5 +228,34 @@ class PetView: NSView {
         case .downRight:
             return "↘︎"
         }
+    }
+
+    private func mirroredDirection(for direction: Direction) -> Direction? {
+        switch direction {
+        case .upRight:
+            return .upLeft
+        case .downRight:
+            return .downLeft
+        default:
+            return nil
+        }
+    }
+
+    private func flippedImageHorizontally(_ image: NSImage) -> NSImage {
+        let size = image.size
+        let flipped = NSImage(size: size)
+        flipped.lockFocus()
+        if let context = NSGraphicsContext.current?.cgContext {
+            context.translateBy(x: size.width, y: 0)
+            context.scaleBy(x: -1, y: 1)
+        }
+        image.draw(
+            at: .zero,
+            from: NSRect(origin: .zero, size: size),
+            operation: .sourceOver,
+            fraction: 1.0
+        )
+        flipped.unlockFocus()
+        return flipped
     }
 }

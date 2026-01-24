@@ -29,14 +29,15 @@ class PetView: NSView {
     private var lastUpdateTime: TimeInterval = 0
     private var movementTimer: Timer?
 
-    private var velocity = CGVector(dx: 100, dy: 100)
-
     private var isMoving = true
     private var nextStateChangeTime: TimeInterval = 0
     private var animationState: AnimationState = .walking
     private var lastDirection: Direction = .downLeft
     private let moveDurationRange: ClosedRange<TimeInterval> = 2.0...4.5
     private let restDurationRange: ClosedRange<TimeInterval> = 2.5...5.5
+
+    private var velocity = CGVector(dx: 20, dy: 20)
+
 
     private let walkFrameNames: [Direction: [String]] = [
         // Replace these placeholders with the names of your sprite frames in Assets.xcassets.
@@ -386,7 +387,7 @@ class PetView: NSView {
     }
 
     private func pickNewVelocity() {
-        let speedRange: ClosedRange<CGFloat> = 120...180
+        let speedRange: ClosedRange<CGFloat> = 10...80
         let speed = CGFloat.random(in: speedRange)
         let component = speed / sqrt(2)
         let directions: [(CGFloat, CGFloat)] = [

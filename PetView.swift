@@ -260,6 +260,11 @@ class PetView: NSView {
     private func updateMovementState(currentTime: TimeInterval) {
         guard currentTime >= nextStateChangeTime else { return }
         if isMoving {
+            if !isDownwardDirection(lastDirection) {
+                pickNewVelocity(preferDown: true)
+                nextStateChangeTime = currentTime + Double.random(in: 0.25...0.6)
+                return
+            }
             isMoving = false
             animationState = .layTransition
             frameIndex = -1
@@ -356,7 +361,7 @@ class PetView: NSView {
         case .walking:
             return lastDirection
         case .layTransition, .laying:
-            return .downLeft
+            return isDownwardDirection(lastDirection) ? lastDirection : .downLeft
         }
     }
 
@@ -375,19 +380,31 @@ class PetView: NSView {
         (1...count).map { "\(prefix)\($0)" }
     }
 
-    private func pickNewVelocity() {
+    private func pickNewVelocity(preferDown: Bool = false) {
         let speedRange: ClosedRange<CGFloat> = 10...40
         let speed = CGFloat.random(in: speedRange)
         let component = speed / sqrt(2)
-        let directions: [(CGFloat, CGFloat)] = [
-            (component, component),
-            (component, -component),
-            (-component, component),
-            (-component, -component)
-        ]
+        let directions: [(CGFloat, CGFloat)]
+        if preferDown {
+            directions = [
+                (component, -component),
+                (-component, -component)
+            ]
+        } else {
+            directions = [
+                (component, component),
+                (component, -component),
+                (-component, component),
+                (-component, -component)
+            ]
+        }
         let selected = directions.randomElement() ?? (component, component)
         velocity = CGVector(dx: selected.0, dy: selected.1)
         lastDirection = currentDirection()
+    }
+
+    private func isDownwardDirection(_ direction: Direction) -> Bool {
+        direction == .downLeft || direction == .downRight
     }
 
     private func placeholderImage(direction: Direction, index: Int) -> NSImage {

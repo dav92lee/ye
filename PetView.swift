@@ -387,7 +387,7 @@ class PetView: NSView {
     }
 
     private func pickNewVelocity() {
-        let speedRange: ClosedRange<CGFloat> = 10...80
+        let speedRange: ClosedRange<CGFloat> = 10...40
         let speed = CGFloat.random(in: speedRange)
         let component = speed / sqrt(2)
         let directions: [(CGFloat, CGFloat)] = [

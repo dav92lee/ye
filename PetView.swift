@@ -13,18 +13,18 @@ class PetView: NSView {
     private let shadowImageView = NSImageView()
     private enum AnimationState {
         case walking
-        case sitTransition
-        case sitting
+        case layTransition
+        case laying
     }
 
     private var walkFrames: [Direction: [NSImage]] = [:]
-    private var sitTransitionFrames: [Direction: [NSImage]] = [:]
-    private var sitIdleFrames: [Direction: [NSImage]] = [:]
+    private var layTransitionFrames: [Direction: [NSImage]] = [:]
+    private var layIdleFrames: [Direction: [NSImage]] = [:]
     private var frameIndex = -1
     private var lastFrameSwitch: TimeInterval = 0
     private let walkFrameInterval: TimeInterval = 0.03
-    private let sitTransitionInterval: TimeInterval = 0.06
-    private let sitIdleInterval: TimeInterval = 0.12
+    private let layTransitionInterval: TimeInterval = 0.03
+    private let layIdleInterval: TimeInterval = 0.12
 
     private var lastUpdateTime: TimeInterval = 0
     private var movementTimer: Timer?
@@ -135,27 +135,12 @@ class PetView: NSView {
             "walk_down_left_22"
         ]
     ]
-    private let sitTransitionFrameNames: [Direction: [String]] = [
-        // Replace these placeholders with the names of your sit transition frames.
-        // Sitting only uses the down direction, so only include down-facing frames.
-        .downLeft: [
-            "sit_transition_down_left_01",
-            "sit_transition_down_left_02",
-            "sit_transition_down_left_03",
-            "sit_transition_down_left_04",
-            "sit_transition_down_left_05",
-            "sit_transition_down_left_06"
-        ]
+    private let layTransitionFrameNames: [Direction: [String]] = [
+        .downLeft: PetView.sequentialFrameNames(prefix: "dog_lay_transition", count: 98)
     ]
-    private let sitIdleFrameNames: [Direction: [String]] = [
-        // Replace these placeholders with the names of your seated idle frames.
-        // Sitting only uses the down direction, so only include down-facing frames.
-        .downLeft: [
-            "sit_idle_down_left_01",
-            "sit_idle_down_left_02",
-            "sit_idle_down_left_03",
-            "sit_idle_down_left_04"
-        ]
+    private let layIdleFrameNames: [Direction: [String]] = [
+        // Placeholder names for laying idle frames until assets are available.
+        .downLeft: PetView.sequentialFrameNames(prefix: "dog_lay_idle_", count: 4)
     ]
 
     override init(frame frameRect: NSRect) {
@@ -225,8 +210,8 @@ class PetView: NSView {
     private func loadAnimations() {
         Direction.allCases.forEach { direction in
             walkFrames[direction] = loadFrames(for: direction, namesByDirection: walkFrameNames)
-            sitTransitionFrames[direction] = loadFrames(for: direction, namesByDirection: sitTransitionFrameNames)
-            sitIdleFrames[direction] = loadFrames(for: direction, namesByDirection: sitIdleFrameNames)
+            layTransitionFrames[direction] = loadFrames(for: direction, namesByDirection: layTransitionFrameNames)
+            layIdleFrames[direction] = loadFrames(for: direction, namesByDirection: layIdleFrameNames)
         }
         updateAnimationFrame(for: lastDirection)
     }
@@ -276,7 +261,7 @@ class PetView: NSView {
         guard currentTime >= nextStateChangeTime else { return }
         if isMoving {
             isMoving = false
-            animationState = .sitTransition
+            animationState = .layTransition
             frameIndex = -1
             nextStateChangeTime = currentTime + Double.random(in: restDurationRange)
         } else {
@@ -331,10 +316,10 @@ class PetView: NSView {
         guard !frames.isEmpty else { return }
         frameIndex += 1
         if frameIndex >= frames.count {
-            if animationState == .sitTransition {
-                animationState = .sitting
+            if animationState == .layTransition {
+                animationState = .laying
                 frameIndex = 0
-                imageView.image = sitIdleFrames[direction]?.first
+                imageView.image = layIdleFrames[direction]?.first
                 return
             }
             frameIndex = 0
@@ -359,10 +344,10 @@ class PetView: NSView {
         switch state {
         case .walking:
             return walkFrameInterval
-        case .sitTransition:
-            return sitTransitionInterval
-        case .sitting:
-            return sitIdleInterval
+        case .layTransition:
+            return layTransitionInterval
+        case .laying:
+            return layIdleInterval
         }
     }
 
@@ -370,7 +355,7 @@ class PetView: NSView {
         switch animationState {
         case .walking:
             return lastDirection
-        case .sitTransition, .sitting:
+        case .layTransition, .laying:
             return .downLeft
         }
     }
@@ -379,11 +364,15 @@ class PetView: NSView {
         switch state {
         case .walking:
             return walkFrames[direction] ?? []
-        case .sitTransition:
-            return sitTransitionFrames[direction] ?? []
-        case .sitting:
-            return sitIdleFrames[direction] ?? []
+        case .layTransition:
+            return layTransitionFrames[direction] ?? []
+        case .laying:
+            return layIdleFrames[direction] ?? []
         }
+    }
+
+    private static func sequentialFrameNames(prefix: String, count: Int) -> [String] {
+        (1...count).map { "\(prefix)\($0)" }
     }
 
     private func pickNewVelocity() {

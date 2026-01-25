@@ -34,7 +34,7 @@ class PetView: NSView {
     private var animationState: AnimationState = .walking
     private var lastDirection: Direction = .downLeft
     private let moveDurationRange: ClosedRange<TimeInterval> = 2.0...4.5
-    private let restDurationRange: ClosedRange<TimeInterval> = 2.5...5.5
+    private let restDurationRange: ClosedRange<TimeInterval> = 180.0...600.0
 
     private var velocity = CGVector(dx: 20, dy: 20)
 

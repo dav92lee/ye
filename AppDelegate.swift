@@ -6,12 +6,28 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var window: NSWindow!
     private var statusItem: NSStatusItem?
 
+    
+    func isDarkMode() -> Bool {
+        if #available(macOS 10.14, *) {
+            let appearance = NSApp.effectiveAppearance
+            return appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+        }
+        return false
+    }
+    
     func applicationDidFinishLaunching(_ notification: Notification) {
-        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        statusItem = NSStatusBar.system.statusItem(withLength: 18)
         if let button = statusItem?.button {
-            let statusImage = NSImage(named: "status-icon-black")
-            statusImage?.isTemplate = true
-            button.image = statusImage
+
+            let imageName = isDarkMode()
+                ? "status-icon-white"
+                : "status-icon-black"
+
+            if let image = NSImage(named: imageName) {
+                image.isTemplate = false
+                button.image = image
+            }
+
             button.imagePosition = .imageOnly
         }
 

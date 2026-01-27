@@ -1,15 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "status-icon-white.png",
+      "filename" : "status-icon-44v5-white 1.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
+      "filename" : "status-icon-44v5-white.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
+      "filename" : "status-icon-44v5-white 2.png",
       "idiom" : "universal",
       "scale" : "3x"
     }

@@ -4,8 +4,17 @@ import Cocoa
 class AppDelegate: NSObject, NSApplicationDelegate {
 
     var window: NSWindow!
+    private var statusItem: NSStatusItem?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        if let button = statusItem?.button {
+            let statusImage = NSImage(named: "status-icon-black")
+            statusImage?.isTemplate = true
+            button.image = statusImage
+            button.imagePosition = .imageOnly
+        }
+
         let screenFrame = NSScreen.main?.frame ?? .zero
 
         // 1) Full-screen transparent overlay window

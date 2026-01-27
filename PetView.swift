@@ -33,8 +33,8 @@ class PetView: NSView {
     private var nextStateChangeTime: TimeInterval = 0
     private var animationState: AnimationState = .walking
     private var lastDirection: Direction = .downLeft
-    private let moveDurationRange: ClosedRange<TimeInterval> = 2.0...4.5
-    private let restDurationRange: ClosedRange<TimeInterval> = 180.0...600.0
+    private let moveDurationRange: ClosedRange<TimeInterval> = 4.0...8.5
+    private let restDurationRange: ClosedRange<TimeInterval> = 10.0...20.0
 
     private var velocity = CGVector(dx: 20, dy: 20)
 
@@ -140,7 +140,7 @@ class PetView: NSView {
     ]
     private let layIdleFrameNames: [Direction: [String]] = [
         // Placeholder names for laying idle frames until assets are available.
-        .downLeft: PetView.sequentialFrameNames(prefix: "dog_lay_idle_", count: 4)
+        .downLeft: PetView.sequentialFrameNames(prefix: "dog_lay_idle_", count: 13)
     ]
 
     override init(frame frameRect: NSRect) {

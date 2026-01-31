@@ -1,17 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "status-icon-44v4 1.png",
+      "filename" : "ye-status-icon-black.svg",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "status-icon-44v4.png",
+      "filename" : "ye-status-icon-black 1.svg",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "status-icon-44v4 2.png",
+      "filename" : "ye-status-icon-black 2.svg",
       "idiom" : "universal",
       "scale" : "3x"
     }

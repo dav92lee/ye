@@ -191,6 +191,7 @@ private extension AppDelegate {
         }
         rootView.snackCursor = snackCursor
         rootView.isSnackPlacementEnabled = true
+        snackCursor?.set()
     }
 
     func makeSnackCursor() -> NSCursor? {

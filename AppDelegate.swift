@@ -157,7 +157,7 @@ private final class SnackOverlayView: NSView {
         didSet {
             if isSnackPlacementEnabled != oldValue {
                 window?.ignoresMouseEvents = !isSnackPlacementEnabled
-                invalidateCursorRects()
+                window?.invalidateCursorRects(for: self)
                 if !isSnackPlacementEnabled {
                     NSCursor.arrow.set()
                 }

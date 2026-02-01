@@ -6,6 +6,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var window: NSWindow!
     private var statusItem: NSStatusItem?
     private var moodIndicator: NSProgressIndicator?
+    private var rootView: SnackOverlayView?
+    private var snackCursor: NSCursor?
     private var moodLevel: Double = 0.5 {
         didSet {
             updateMoodUI()
@@ -56,9 +58,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
 
         // 2) Clear root view that covers the screen
-        let root = NSView(frame: screenFrame)
+        let root = SnackOverlayView(frame: screenFrame)
         root.wantsLayer = true
         root.layer?.backgroundColor = NSColor.clear.cgColor
+        root.onSnackPlacement = { [weak self] point in
+            self?.placeSnack(at: point)
+        }
+        rootView = root
         window.contentView = root
 
         // 3) Small pet view (pink square)
@@ -128,6 +134,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func handleSnack() {
         adjustMood(by: 0.1)
+        beginSnackPlacement()
     }
 
     @objc private func handleFeed() {
@@ -140,5 +147,69 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func adjustMood(by delta: Double) {
         moodLevel = min(max(moodLevel + delta, 0.0), 1.0)
+    }
+}
+
+private final class SnackOverlayView: NSView {
+    var onSnackPlacement: ((NSPoint) -> Void)?
+    var snackCursor: NSCursor?
+    var isSnackPlacementEnabled = false {
+        didSet {
+            if isSnackPlacementEnabled != oldValue {
+                window?.ignoresMouseEvents = !isSnackPlacementEnabled
+                invalidateCursorRects()
+                if !isSnackPlacementEnabled {
+                    NSCursor.arrow.set()
+                }
+            }
+        }
+    }
+
+    override func mouseDown(with event: NSEvent) {
+        guard isSnackPlacementEnabled else {
+            super.mouseDown(with: event)
+            return
+        }
+        let location = convert(event.locationInWindow, from: nil)
+        onSnackPlacement?(location)
+        isSnackPlacementEnabled = false
+    }
+
+    override func resetCursorRects() {
+        super.resetCursorRects()
+        guard isSnackPlacementEnabled, let cursor = snackCursor else { return }
+        addCursorRect(bounds, cursor: cursor)
+        cursor.set()
+    }
+}
+
+private extension AppDelegate {
+    func beginSnackPlacement() {
+        guard let rootView = rootView else { return }
+        if snackCursor == nil {
+            snackCursor = makeSnackCursor()
+        }
+        rootView.snackCursor = snackCursor
+        rootView.isSnackPlacementEnabled = true
+    }
+
+    func makeSnackCursor() -> NSCursor? {
+        guard let image = NSImage(named: "carrot") else { return nil }
+        let hotSpot = NSPoint(x: image.size.width / 2.0, y: image.size.height / 2.0)
+        return NSCursor(image: image, hotSpot: hotSpot)
+    }
+
+    func placeSnack(at point: NSPoint) {
+        guard let rootView = rootView, let image = NSImage(named: "carrot") else { return }
+        let maxDimension: CGFloat = 40
+        let scale = maxDimension / max(image.size.width, image.size.height, 1.0)
+        let size = NSSize(width: image.size.width * scale, height: image.size.height * scale)
+        let originX = min(max(point.x - size.width / 2.0, 0), rootView.bounds.width - size.width)
+        let originY = min(max(point.y - size.height / 2.0, 0), rootView.bounds.height - size.height)
+
+        let imageView = NSImageView(frame: NSRect(origin: NSPoint(x: originX, y: originY), size: size))
+        imageView.image = image
+        imageView.imageScaling = .scaleProportionallyUpOrDown
+        rootView.addSubview(imageView)
     }
 }

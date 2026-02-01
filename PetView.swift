@@ -241,9 +241,11 @@ class PetView: NSView {
         lastUpdateTime = CACurrentMediaTime()
         lastFrameSwitch = lastUpdateTime
         nextStateChangeTime = lastUpdateTime + Double.random(in: moveDurationRange)
-        movementTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 60.0, repeats: true) { [weak self] _ in
+        let timer = Timer(timeInterval: 1.0 / 60.0, repeats: true) { [weak self] _ in
             self?.tick()
         }
+        RunLoop.main.add(timer, forMode: .common)
+        movementTimer = timer
     }
 
     private func tick() {

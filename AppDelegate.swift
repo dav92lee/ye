@@ -98,6 +98,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         petItem.target = self
         menu.addItem(petItem)
 
+        menu.addItem(.separator())
+
+        let quitItem = NSMenuItem(title: "Quit", action: #selector(handleQuit), keyEquivalent: "q")
+        quitItem.target = self
+        menu.addItem(quitItem)
+
         return menu
     }
 
@@ -143,6 +149,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func handlePet() {
         adjustMood(by: 0.15)
+    }
+
+    @objc private func handleQuit() {
+        NSApp.terminate(nil)
     }
 
     private func adjustMood(by delta: Double) {
